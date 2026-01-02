@@ -1,1 +1,114 @@
+const express = require("express");
+const router = express.Router();
+const Student = require("../models/students");
 
+// --------------------------
+// CREATE Student (Single)
+// --------------------------
+router.post("/add", async (req, res) => {
+  try {
+    const student = new Student(req.body);
+    const savedStudent = await student.save();
+    res.status(201).json(savedStudent);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// --------------------------
+// CREATE Multiple Students
+// --------------------------
+router.post("/add-multiple", async (req, res) => {
+  try {
+    const savedStudents = await Student.insertMany(req.body.students);
+    res.status(201).json(savedStudents);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// --------------------------
+// READ All Students
+// --------------------------
+router.get("/all", async (req, res) => {
+  try {
+    const students = await Student.find();
+    res.status(200).json(students);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --------------------------
+// READ Student by ID
+// --------------------------
+router.get("/:id", async (req, res) => {
+  try {
+    const student = await Student.findById(req.params.id);
+    if (!student) return res.status(404).json({ message: "Student not found" });
+    res.status(200).json(student);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --------------------------
+// UPDATE Student (Single)
+// --------------------------
+router.put("/update/:id", async (req, res) => {
+  try {
+    const updatedStudent = await Student.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { new: true }
+    );
+    if (!updatedStudent)
+      return res.status(404).json({ message: "Student not found" });
+
+    res.status(200).json(updatedStudent);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// --------------------------
+// UPDATE Multiple Students
+// --------------------------
+router.put("/update-multiple", async (req, res) => {
+  try {
+    const updates = req.body.updates; 
+    // Example input:
+    // { "updates": [ { "id": "...", "data": {...} }, ... ] }
+
+    const updateResults = [];
+
+    for (const update of updates) {
+      const result = await Student.findByIdAndUpdate(update.id, update.data, {
+        new: true,
+      });
+      updateResults.push(result);
+    }
+
+    res.status(200).json(updateResults);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --------------------------
+// DELETE Student
+// --------------------------
+router.delete("/delete/:id", async (req, res) => {
+  try {
+    const deletedStudent = await Student.findByIdAndDelete(req.params.id);
+
+    if (!deletedStudent)
+      return res.status(404).json({ message: "Student not found" });
+
+    res.status(200).json({ message: "Student deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+module.exports = router;
